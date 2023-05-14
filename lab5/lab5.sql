@@ -5,6 +5,8 @@ create or replace package package_cgg as
     function find_job_id(v_job_title jobs.job_title%type) return jobs.job_id%type;
     function find_salary(v_departament_id departments.department_id%type, v_job_id jobs.job_id%type) return employees.salary%type;
     procedure add_employee(v_first_name employees.first_name%type, v_last_name employees.last_name%type, v_phone_number employees.phone_number%type, v_email employees.email%type, v_manager_first_name employees.first_name%type, v_manager_last_name employees.last_name%type, v_departament_name departments.department_name%type, v_job_title jobs.job_title%type);
+    -- b
+    procedure move_employee(v_first_name employees.first_name%type, v_last_name employees.last_name%type, v_departament_name departments.department_name%type, v_job_title jobs.job_title%type, v_manager_first_name employees.first_name%type, v_manager_last_name employees.last_name%type);
 end package_cgg;
 /
 create or replace package body package_cgg as
@@ -48,8 +50,26 @@ create or replace package body package_cgg as
         v_salary employees.salary%type := find_salary(v_departament_id, v_job_id);
     begin
         select max(employee_id) into v_employee_id from employees;
-        insert into employees_cgg values(v_employee_id, v_first_name, v_last_name, v_email, v_phone_number, sysdate, v_job_id, v_salary, null, v_manager_id, v_departament_id);
+        insert into employees values(v_employee_id, v_first_name, v_last_name, v_email, v_phone_number, sysdate, v_job_id, v_salary, null, v_manager_id, v_departament_id);
         exception when OTHERS then dbms_output.put_line('buba add_employee');
     end add_employee;
+
+    procedure move_employee(v_first_name employees.first_name%type, v_last_name employees.last_name%type, v_departament_name departments.department_name%type, v_job_title jobs.job_title%type, v_manager_first_name employees.first_name%type, v_manager_last_name employees.last_name%type) is
+        v_departament_id departments.department_id%type := find_departament_id(v_departament_name);
+        v_job_id jobs.job_id%type := find_job_id(v_job_title);
+        v_manager_id employees.employee_id%type := find_manager_id(v_manager_first_name, v_manager_last_name);
+        v_salary employees.salary%type := find_salary(v_departament_id, v_job_id);
+        curr_employee_id employees.employee_id%type;
+        curr_hire_date employees.hire_date%type;
+        curr_job_id employees.job_id%type;
+        curr_salary employees.salary%type;
+        curr_department_id employees.department_id%type;
+    begin
+        select employee_id, hire_date, job_id, salary, department_id into curr_employee_id, curr_hire_date, curr_job_id, curr_salary, curr_department_id from employees_cgg where first_name = v_first_name and last_name = v_last_name;
+        if v_salary > curr_salary then v_salary := curr_salary;
+        end if;
+        update employees_cgg set hire_date = sysdate, job_id = v_job_id, salary = v_salary, commission_pct = (select min(commission_pct) from employees where department_id = v_departament_id and job_id = v_job_id), manager_id = v_manager_id, department_id = v_departament_id where first_name = v_first_name and last_name = v_last_name; 
+        insert into job_history_cgg values(curr_department_id, curr_hire_date, sysdate, curr_job_id, curr_department_id);
+    end move_employee;
 end package_cgg;
 /
