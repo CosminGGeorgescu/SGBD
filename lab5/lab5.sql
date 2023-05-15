@@ -1,3 +1,5 @@
+set SERVEROUTPUT on;
+/
 create or replace package package_cgg as
     -- a
     function find_manager_id(v_manager_first_name employees.first_name%type, v_manager_last_name employees.last_name%type) return employees.employee_id%type;
@@ -7,6 +9,8 @@ create or replace package package_cgg as
     procedure add_employee(v_first_name employees.first_name%type, v_last_name employees.last_name%type, v_phone_number employees.phone_number%type, v_email employees.email%type, v_manager_first_name employees.first_name%type, v_manager_last_name employees.last_name%type, v_departament_name departments.department_name%type, v_job_title jobs.job_title%type);
     -- b
     procedure move_employee(v_first_name employees.first_name%type, v_last_name employees.last_name%type, v_departament_name departments.department_name%type, v_job_title jobs.job_title%type, v_manager_first_name employees.first_name%type, v_manager_last_name employees.last_name%type);
+    -- c
+    function subordinates_number(v_first_name employees.first_name%type, v_last_name employees.last_name%type) return number;
 end package_cgg;
 /
 create or replace package body package_cgg as
@@ -65,11 +69,23 @@ create or replace package body package_cgg as
         curr_salary employees.salary%type;
         curr_department_id employees.department_id%type;
     begin
-        select employee_id, hire_date, job_id, salary, department_id into curr_employee_id, curr_hire_date, curr_job_id, curr_salary, curr_department_id from employees_cgg where first_name = v_first_name and last_name = v_last_name;
+        select employee_id, hire_date, job_id, salary, department_id into curr_employee_id, curr_hire_date, curr_job_id, curr_salary, curr_department_id from employees where first_name = v_first_name and last_name = v_last_name;
         if v_salary > curr_salary then v_salary := curr_salary;
         end if;
-        update employees_cgg set hire_date = sysdate, job_id = v_job_id, salary = v_salary, commission_pct = (select min(commission_pct) from employees where department_id = v_departament_id and job_id = v_job_id), manager_id = v_manager_id, department_id = v_departament_id where first_name = v_first_name and last_name = v_last_name; 
-        insert into job_history_cgg values(curr_department_id, curr_hire_date, sysdate, curr_job_id, curr_department_id);
+        update employees set hire_date = sysdate, job_id = v_job_id, salary = v_salary, commission_pct = (select min(commission_pct) from employees where department_id = v_departament_id and job_id = v_job_id), manager_id = v_manager_id, department_id = v_departament_id where first_name = v_first_name and last_name = v_last_name; 
+        insert into job_history values(curr_department_id, curr_hire_date, sysdate, curr_job_id, curr_department_id);
     end move_employee;
+
+    function subordinates_number(v_first_name employees.first_name%type, v_last_name employees.last_name%type) return number is
+        v_employee_id employees.employee_id%TYPE;
+        v_subordinates_count number := 0;
+    begin
+        SELECT employee_id INTO v_employee_id FROM employees WHERE first_name = v_first_name AND last_name = v_last_name;
+        select count(*) into v_subordinates_count from employees where manager_id = v_employee_id;
+        for x in (select * from employees where manager_id = v_employee_id) loop
+            v_subordinates_count := v_subordinates_count + subordinates_number(x.first_name, x.last_name);
+        end loop;
+        return v_subordinates_count;
+    end subordinates_number;
 end package_cgg;
 /
