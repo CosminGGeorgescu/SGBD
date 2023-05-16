@@ -11,6 +11,8 @@ create or replace package package_cgg as
     procedure move_employee(v_first_name employees.first_name%type, v_last_name employees.last_name%type, v_departament_name departments.department_name%type, v_job_title jobs.job_title%type, v_manager_first_name employees.first_name%type, v_manager_last_name employees.last_name%type);
     -- c
     function subordinates_number(v_first_name employees.first_name%type, v_last_name employees.last_name%type) return number;
+    -- e
+    procedure update_salary(v_first_name employees.first_name%TYPE, v_last_name employees.last_name%TYPE, v_salary employees.salary%TYPE);
 end package_cgg;
 /
 create or replace package body package_cgg as
@@ -87,5 +89,26 @@ create or replace package body package_cgg as
         end loop;
         return v_subordinates_count;
     end subordinates_number;
+
+    procedure update_salary(v_first_name employees.first_name%TYPE, v_last_name employees.last_name%TYPE, v_salary employees.salary%TYPE) is
+        v_employee_id employees.employee_id%type;
+        v_job_id employees.job_id%type;
+        v_min_salary jobs.min_salary%type;
+        v_max_salary jobs.max_salary%type;
+    begin
+        select employee_id, job_id into v_employee_id, v_job_id from employees where first_name = v_first_name and last_name = v_last_name;
+        select min_salary, max_salary into v_min_salary, v_max_salary from jobs where job_id = v_job_id;
+        if v_salary < v_min_salary or v_salary > v_max_salary then
+            return;
+        end if;
+        update employees set salary = v_salary where employee_id = v_employee_id;
+        exception 
+            when TOO_MANY_ROWS then 
+                dbms_output.put_line('prea multi angajati');
+                for x in (select employee_id from employees where first_name = v_first_name and last_name = v_last_name) loop
+                    dbms_output.put_line(x.employee_id);
+                end loop;
+            when NO_DATA_FOUND then dbms_output.put_line('nu angajati');
+    end;
 end package_cgg;
 /
