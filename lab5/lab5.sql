@@ -17,6 +17,8 @@ create or replace package package_cgg as
     function subordinates_number(v_first_name employees.first_name%type, v_last_name employees.last_name%type) return number;
     -- e
     procedure update_salary(v_first_name employees.first_name%type, v_last_name employees.last_name%type, v_salary employees.salary%type);
+    -- h
+    procedure jobs_to_employees;
 end package_cgg;
 /
 create or replace package body package_cgg as
@@ -118,5 +120,23 @@ create or replace package body package_cgg as
                 end loop;
             when NO_DATA_FOUND then dbms_output.put_line('nu angajati');
     end update_salary;
+
+    procedure jobs_to_employees is
+        flag number;
+    begin
+        for j in all_jobs loop
+            dbms_output.put_line('Job: ' || j.job_title);
+            for e in job_employees(j.job_id) loop
+                flag := 0;
+                select count(*) into flag from job_history where employee_id = e.employee_id and job_id = e.job_id;
+                if flag > 0 then 
+                    dbms_output.put_line(e.first_name || ' ' || e.last_name || ' !A mai lucrat aici');
+                else
+                    dbms_output.put_line(e.first_name || ' ' || e.last_name);
+                end if;
+            end loop;
+            dbms_output.put_line('');
+        end loop;
+    end;
 end package_cgg;
 /
