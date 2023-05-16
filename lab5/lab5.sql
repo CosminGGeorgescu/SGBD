@@ -3,6 +3,8 @@ set SERVEROUTPUT on;
 create or replace package package_cgg as
     -- f
     cursor job_employees(v_job_id employees.job_id%type) return employees%rowtype;
+    -- g
+    cursor all_jobs return jobs%rowtype;
     -- a
     function find_manager_id(v_manager_first_name employees.first_name%type, v_manager_last_name employees.last_name%type) return employees.employee_id%type;
     function find_departament_id(v_departament_name departments.department_name%type) return departments.department_id%type;
@@ -19,6 +21,8 @@ end package_cgg;
 /
 create or replace package body package_cgg as
     cursor job_employees(v_job_id employees.job_id%type) return employees%rowtype is select * from employees where job_id = v_job_id;
+
+    cursor all_jobs return jobs%rowtype is select * from jobs;
 
     function find_manager_id(v_manager_first_name employees.first_name%type, v_manager_last_name employees.last_name%type) return employees.employee_id%type is
         id employees.employee_id%type;
