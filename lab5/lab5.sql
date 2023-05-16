@@ -1,6 +1,8 @@
 set SERVEROUTPUT on;
 /
 create or replace package package_cgg as
+    -- f
+    cursor job_employees(v_job_id employees.job_id%type) return employees%rowtype;
     -- a
     function find_manager_id(v_manager_first_name employees.first_name%type, v_manager_last_name employees.last_name%type) return employees.employee_id%type;
     function find_departament_id(v_departament_name departments.department_name%type) return departments.department_id%type;
@@ -12,10 +14,12 @@ create or replace package package_cgg as
     -- c
     function subordinates_number(v_first_name employees.first_name%type, v_last_name employees.last_name%type) return number;
     -- e
-    procedure update_salary(v_first_name employees.first_name%TYPE, v_last_name employees.last_name%TYPE, v_salary employees.salary%TYPE);
+    procedure update_salary(v_first_name employees.first_name%type, v_last_name employees.last_name%type, v_salary employees.salary%type);
 end package_cgg;
 /
 create or replace package body package_cgg as
+    cursor job_employees(v_job_id employees.job_id%type) return employees%rowtype is select * from employees where job_id = v_job_id;
+
     function find_manager_id(v_manager_first_name employees.first_name%type, v_manager_last_name employees.last_name%type) return employees.employee_id%type is
         id employees.employee_id%type;
     begin
@@ -79,7 +83,7 @@ create or replace package body package_cgg as
     end move_employee;
 
     function subordinates_number(v_first_name employees.first_name%type, v_last_name employees.last_name%type) return number is
-        v_employee_id employees.employee_id%TYPE;
+        v_employee_id employees.employee_id%type;
         v_subordinates_count number := 0;
     begin
         SELECT employee_id INTO v_employee_id FROM employees WHERE first_name = v_first_name AND last_name = v_last_name;
@@ -90,7 +94,7 @@ create or replace package body package_cgg as
         return v_subordinates_count;
     end subordinates_number;
 
-    procedure update_salary(v_first_name employees.first_name%TYPE, v_last_name employees.last_name%TYPE, v_salary employees.salary%TYPE) is
+    procedure update_salary(v_first_name employees.first_name%type, v_last_name employees.last_name%type, v_salary employees.salary%type) is
         v_employee_id employees.employee_id%type;
         v_job_id employees.job_id%type;
         v_min_salary jobs.min_salary%type;
@@ -109,6 +113,6 @@ create or replace package body package_cgg as
                     dbms_output.put_line(x.employee_id);
                 end loop;
             when NO_DATA_FOUND then dbms_output.put_line('nu angajati');
-    end;
+    end update_salary;
 end package_cgg;
 /
