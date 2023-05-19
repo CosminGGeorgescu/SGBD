@@ -140,3 +140,8 @@ create or replace package body package_cgg as
     end;
 end package_cgg;
 /
+begin
+    package_cgg.jobs_to_employees;
+end;
+/
+

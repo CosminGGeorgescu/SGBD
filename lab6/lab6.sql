@@ -19,6 +19,7 @@ END;
 /
 -- 3
 -- a
+create table info_emp_cgg as (select * from info_emp_mdr);
 create table info_dept_cgg as (select d.*,(select count(*) from employees e where e.department_id = d.department_id) as numar  from departments d);
 /
 -- b
@@ -59,11 +60,11 @@ create table emp_test_cgg (employee_id NUMBER(6,0) primary key, last_name VARCHA
 create table dept_test_cgg (department_id NUMBER(4,0) primary key, department_name VARCHAR2(30 BYTE));
 /
 -- b
-create or replace trigger ex5_cgg before delete of department_id on dept_test_cgg for each ROW
+create or replace trigger ex5_cgg before delete on dept_test_cgg for each ROW
 begin
     if UPDATING THEN
         update emp_test_cgg set department_id = :new.department_id where department_id = :old.department_id;
-    ELSIF DELETING
+    ELSIF DELETING then
         delete from emp_test_cgg where department_id = :old.department_id;
     end if;
 end;
@@ -80,6 +81,8 @@ create table table_cgg(
 -- b
 create or replace trigger ex6_cgg after suspend on schema
 begin
-    insert into table_cgg values (sys.login_user, sys.database_name, '', sysdate);
+    insert into table_cgg values (sys.login_user, sys.database_name, dbms_utility.format_error_stack, sysdate);
 end;
+/
+drop trigger ex6_cgg;
 /

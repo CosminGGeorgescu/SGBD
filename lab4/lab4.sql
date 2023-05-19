@@ -34,17 +34,24 @@ BEGIN
     if linii = 1 then 
         insert into info_cgg values(utilizator, sysdate, 'f2_gcc', 1, 'un angajat');
     end if;
+        return 0;
 
 
     EXCEPTION
     WHEN NO_DATA_FOUND THEN
         insert into info_cgg values(utilizator, sysdate, 'f2_cgg', 0, 'zero angajati');
+        return 0;
     WHEN TOO_MANY_ROWS THEN
         insert into info_cgg values(utilizator, sysdate, 'f2_cgg', linii, 'mai multi angajati');
+        return 0;
     WHEN OTHERS THEN
         insert into info_cgg values(utilizator, sysdate, 'f2_cgg', linii, 'buba');
+        return 0;
 END f2_cgg;
-
+/
+begin
+dbms_output.put_line(f2_cgg());
+end;
 /
 
 CREATE OR REPLACE PROCEDURE p4_cgg
@@ -78,10 +85,11 @@ BEGIN
 END p4_cgg;
 
 /
-
+execute p4_cgg('Bell');
+/
 -- 3
 
-CREATE OR REPLACE function ex3_cgg(v_oras locations.city%type) return number is
+CREATE OR replace function exe3_cgg(v_oras locations.city%type) return number is
     utilizator  varchar2(100);
     oras locations.location_id%type;
     nr number;
@@ -109,8 +117,11 @@ BEGIN
         when NO_DATA_FOUND then
             insert into info_cgg values(utilizator, sysdate, 'ex3_cgg', 0, 'buba oras');
             return 0;
-END ex3_cgg;
-
+END exe3_cgg;
+/
+begin
+dbms_output.put_line(exe3_cgg('Munich'));
+end;
 /
 
 -- 4
@@ -145,7 +156,8 @@ BEGIN
 
     END IF;
 END;
-
+/
+execute ex4_cgg(102);
 /
 
 -- 5
@@ -174,7 +186,8 @@ BEGIN
     END LOOP;
 END;
 /
-
+execute ex5_cgg();
+/
 -- 6
 
 CREATE OR REPLACE PROCEDURE ex6_cgg
@@ -200,3 +213,6 @@ BEGIN
             DBMS_OUTPUT.PUT_LINE('');
     END LOOP;
 END;
+/
+execute ex6_cgg();
+/

@@ -36,8 +36,6 @@ create table excursie_cgg(
     status varchar2(20) check (status in ('disponibila', 'anulata'))
 ) nested table orase store as orase_tab;
 /
-drop table excursie_cgg;
-/
 --a
 insert into excursie_cgg values (1, 'Transylvania Tour', tip_orase_cgg('Bucharest', 'Brasov', 'Sibiu'), 'disponibila');
 insert into excursie_cgg values (2, 'West Coast USA', tip_orase_cgg('New York', 'San Francisco', 'Los Angeles', 'Las Vegas'), 'anulata');
@@ -72,7 +70,7 @@ begin
             then aux(i) := tabel(i);
         end if;
         if i = 2
-            then aux(i) := oras2;
+            then aux(i) := oras;
             aux.extend;
             aux(i + 1) := tabel(i);
         end if;
@@ -136,6 +134,7 @@ begin
     where cod_excursie = id_excursie;
 end;
 /
+-- c
 declare
     tabel tip_orase_cgg := tip_orase_cgg();
     id_excursie number := &id_excursie;
@@ -152,6 +151,7 @@ begin
     end loop;
 end;
 /
+-- d
 declare
     tabel tip_orase_Cgg := tip_orase_cgg();
     TYPE tip_ids is varray(5) of number;
@@ -176,6 +176,7 @@ begin
     end loop;
 end;
 /
+-- e
 declare
     tabel tip_orase_cgg := tip_orase_cgg();
     TYPE tip_ids is varray(5) of number;

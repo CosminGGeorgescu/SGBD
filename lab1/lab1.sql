@@ -7,8 +7,24 @@ set SERVEROUTPUT ON;
 --e) text 1 adaugat un blocul principal
 --f) text 2 adaugat in blocul principal
 
+/
 --2
-
+--a
+declare
+    rentals number;
+begin
+    for i in 1..30 loop
+        select count(*) into rentals from rental where i = to_char(book_date, 'dd');
+        dbms_output.put_line(i || ': ' || rentals);
+    end loop;
+end;
+/
+--b
+select o.data, count(r.book_date)
+FROM octombrie_cgg o
+left  join rental r on o.data = r.book_date
+group by o.data order by o.data;
+/
 
 --3
 declare
@@ -41,7 +57,7 @@ begin
     select count(title_id)
     into total
     from title;
-    dbms_output.put_line(nume || ': ');
+    dbms_output.put_line(nume || ': ' || nr_filme);
     case
         when nr_filme >= 0.75 * total
             then dbms_output.put_line('cat1');
