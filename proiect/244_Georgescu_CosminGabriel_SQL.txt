@@ -1,0 +1,183 @@
+-- 4
+create table authors ( author_id int primary key, name varchar2(255));
+create table publishers ( publisher_id int primary key, name varchar2(255));
+create table genres ( genre_id int primary key, name varchar2(255));
+create table members (member_id int primary key, name varchar2(255));
+create table books ( book_id int primary key, genre_id int, publisher_id int, title varchar2(255), foreign key (genre_id) references genres (genre_id), foreign key (publisher_id) references publishers (publisher_id));
+create table authorship (book_id int, author_id int, primary key (book_id, author_id), foreign key (book_id) references books (book_id), foreign key (author_id) references authors (author_id));
+create table rentals (member_id int, book_id int, primary key (member_id, book_id), foreign key (member_id) references members (member_id), foreign key (book_id) references books (book_id), rental_date date);
+-- 5
+insert into authors values (1, 'John Smith');
+insert into authors values (2, 'Jane Doe');
+insert into authors values (3, 'Michael Johnson');
+insert into authors values (4, 'Emily Williams');
+insert into authors values (5, 'David Brown');
+insert into authors values (6, 'Tara Westover');
+insert into authors values (7, 'Ernest Hemingway');
+insert into authors values (8, 'Haruki Murakami');
+insert into publishers values (1, 'Penguin Random House');
+insert into publishers values (2, 'HarperCollins Publishers');
+insert into publishers values (3, 'Simon & Schuster');
+insert into publishers values (4, 'Hachette Book Group');
+insert into publishers values (5, 'Macmillan Publishers');
+insert into genres values (1, 'Fiction');
+insert into genres values (2, 'Mystery');
+insert into genres values (3, 'Romance');
+insert into genres values (4, 'Science Fiction');
+insert into genres values (5, 'Thriller');
+insert into members values (1, 'Benjamin Thompson');
+insert into members values (2, 'Maya Patel');
+insert into members values (3, 'Lucas Anderson');
+insert into members values (4, 'Olivia Ramirez');
+insert into members values (5, 'Ethan Johnson');
+insert into members values (6, 'Sophia Johnson');
+insert into books values (1, 1, 1, 'To Kill a Mockingbird');
+insert into books values (2, 2, 2, '1984');
+insert into books values (3, 3, 3, 'Pride and Prejudice');
+insert into books values (4, 4, 4, 'The Great Gatsby');
+insert into books values (5, 5, 5, 'The Catcher in the Rye');
+insert into books values (6, 3, 2, 'Madame Bovary');
+insert into books values (7, 1, 1, 'The Da Vinci Code');
+insert into books values (8, 2, 2, 'Gone Girl');
+insert into books values (9, 4, 3, 'The Hunger Games');
+insert into books values (10, 3, 5, 'The Old Man and the Sea');
+insert into books values (11, 1, 3, 'Kafka on the Shore');
+insert into authorship values (1, 3);
+insert into authorship values (1, 5);
+insert into authorship values (2, 1);
+insert into authorship values (2, 4);
+insert into authorship values (3, 2);
+insert into authorship values (4, 1);
+insert into authorship values (4, 3);
+insert into authorship values (5, 2);
+insert into authorship values (5, 4);
+insert into authorship values (5, 5);
+insert into authorship values (7, 5);
+insert into authorship values (8, 5);
+insert into authorship values (9, 5);
+insert into authorship values (10, 7);
+insert into authorship values (11, 8);
+insert into rentals values (1, 3, to_date('2023-05-01', 'YYYY-MM-DD'));
+insert into rentals values (1, 5, to_date('2023-05-02', 'YYYY-MM-DD'));
+insert into rentals values (2, 1, to_date('2023-05-03', 'YYYY-MM-DD'));
+insert into rentals values (2, 4, to_date('2023-05-04', 'YYYY-MM-DD'));
+insert into rentals values (3, 2, to_date('2023-05-05', 'YYYY-MM-DD'));
+insert into rentals values (3, 3, to_date('2023-05-06', 'YYYY-MM-DD'));
+insert into rentals values (4, 1, to_date('2023-05-07', 'YYYY-MM-DD'));
+insert into rentals values (4, 2, to_date('2023-05-08', 'YYYY-MM-DD'));
+insert into rentals values (4, 5, to_date('2023-05-09', 'YYYY-MM-DD'));
+insert into rentals values (5, 1, to_date('2023-05-10', 'YYYY-MM-DD'));
+insert into rentals values (3, 6, to_date('2023-05-11', 'YYYY-MM-DD'));
+insert into rentals values (5, 2, to_date('2023-05-12', 'YYYY-MM-DD'));
+insert into rentals values (5, 3, to_date('2023-05-13', 'YYYY-MM-DD'));
+insert into rentals values (6, 7, to_date('2023-05-18', 'YYYY-MM-DD'));
+insert into rentals values (6, 8, to_date('2023-05-20', 'YYYY-MM-DD'));
+insert into rentals values (6, 9, to_date('2023-05-21', 'YYYY-MM-DD'));
+insert into rentals values (2, 11, to_date('2023-05-22', 'YYYY-MM-DD'));
+-- 6
+create or replace procedure publishers_and_books is
+    type publishers_t is table of publishers.publisher_id%type index by pls_integer;
+    type publisher_books_t is table of books.title%type;
+    publishers_arr publishers_t;
+    publisher_books publisher_books_t := publisher_books_t();
+    publisher_name publishers.name%type;
+begin
+    select publisher_id bulk collect into publishers_arr from publishers;
+    for i in publishers_arr.first..publishers_arr.last loop
+        select name into publisher_name from publishers where publisher_id = publishers_arr(i);
+        dbms_output.put_line(publisher_name);
+        select title bulk collect into publisher_books from books where publisher_id = publishers_arr(i);
+        for j in publisher_books.first..publisher_books.last loop
+            dbms_output.put_line(' - ' || publisher_books(j));
+        end loop;
+    end loop;
+end;
+-- 7
+create or replace procedure member_rentals_info(v_member_name in members.name%type) is
+    cursor book_authors(v_book_id books.book_id%type) is select a2.name from authorship a1 join authors a2 on a1.author_id = a2.author_id where a1.book_id = v_book_id;
+    v_member_id members.member_id%type;
+begin
+    select member_id into v_member_id from members where name = v_member_name;
+    for b in (select r.book_id, b.title from rentals r join books b on r.book_id = b.book_id where r.member_id = v_member_id) loop
+        dbms_output.put_line(b.title);
+        for a in book_authors(b.book_id) loop
+            dbms_output.put_line(' - ' || a.name);
+        end loop;
+    end loop;
+end member_rentals_info;
+-- 8
+create or replace function member_prefered_genre(v_member_name in members.name%type) return genres.name%type is
+    v_member_id members.member_id%type;
+    v_max number;
+    v_occurences number;
+    return_t genres.name%type;
+begin
+    declare
+        flag number := 0;
+    begin
+        SELECT count(*) into flag
+        FROM authors
+        WHERE name = v_member_name;
+        if flag != 0 then raise_application_error(-20001, 'can not spy on authors');
+        end if;
+    end;
+    select member_id into v_member_id from members where name = v_member_name;
+    select genre, occurence into return_t, v_max from (select g.name as genre, count(g.name) as occurence from rentals r join books b on r.book_id = b.book_id join genres g on b.genre_id = g.genre_id where r.member_id = v_member_id group by g.name order by occurence desc) where rownum <= 1;
+    select count(*) into v_occurences from (select count(g.name) as occurence from rentals r join books b on r.book_id = b.book_id join genres g on b.genre_id = g.genre_id where r.member_id = v_member_id group by g.name order by occurence desc) where occurence = v_max;
+    if v_occurences > 1 then raise_application_error(-20002, 'more than one prefered genre');
+    end if;
+    return return_t;
+end member_prefered_genre;
+-- 9
+create or replace procedure authors_and_fan is
+    type authors_t is table of authors.name%type index by pls_integer;
+    col authors_t;
+    buba authors.name%type;
+begin
+    for p in (SELECT a.author_id, a.name AS author, f.name AS fan
+    FROM authors a
+    JOIN (
+        SELECT au.author_id, m.member_id AS fan_id, m.name, dense_rank() OVER (PARTITION BY au.author_id ORDER BY COUNT(*) DESC) AS rn
+        FROM authorship au
+        JOIN books b ON au.book_id = b.book_id
+        JOIN rentals r ON b.book_id = r.book_id
+        JOIN members m ON r.member_id = m.member_id
+        GROUP BY au.author_id, m.member_id, m.name
+    ) f ON a.author_id = f.author_id AND f.rn = 1)
+     loop
+        if col.exists(p.author_id) then 
+          raise TOO_MANY_ROWS;
+        else
+            col(p.author_id) := p.fan;
+        end if;
+        dbms_output.put_line(p.author || ' -> ' || p.fan);
+    end loop;
+    for i in col.first..col.last loop
+        buba := col(i);
+    end loop;
+    exception 
+        when NO_DATA_FOUND then dbms_output.put_line('An author has no fans :(');
+        when TOO_MANY_ROWS then dbms_output.put_line('An author has more than one biggest fan');
+end;
+-- 10
+CREATE OR REPLACE TRIGGER sus_activity BEFORE INSERT ON rentals
+declare
+  current_hour NUMBER;
+begin
+  select EXTRACT(hour from SYSTIMESTAMP) into current_hour from DUAL;
+  if current_hour >= 15 or current_hour < 8 then RAISE_APPLICATION_ERROR(-20001, 'Cannot insert into rentals between 6PM and 8AM');
+  end if;
+end;
+-- 11
+CREATE OR REPLACE TRIGGER check_rental_date BEFORE UPDATE ON rentals FOR EACH ROW
+BEGIN
+  IF (:NEW.rental_date <= :OLD.rental_date) THEN RAISE_APPLICATION_ERROR(-20001, 'Updated rental date cannot be before the old date.');
+  END IF;
+END;
+-- 12
+create or replace TRIGGER unauthorized_acc before alter or drop on schema
+begin
+    if user != 'SYS' then RAISE_APPLICATION_ERROR(-20001, 'Unauthorized drop or alter query from non-sys users');
+    else dbms_output.put_line('Query authorized');
+    end if;
+end;
